@@ -1,0 +1,41 @@
+db:
+    image: mariadb:10.1.19
+    environment:
+        MYSQL_ROOT_PASSWORD: QaPONC7WhgQdZAZ4
+        MYSQL_DATABASE: elixium
+    volumes:
+        - ./db:/var/lib/mysql
+        - ./db-conf/mariadb.cnf:/etc/mysql/conf.d/mariadb.cnf
+    labels:
+        - "traefik.enable=false"
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+
+app:
+    build: ./php-fpm
+    volumes:
+        - ./app:/var/www/html
+        - ./php-fpm/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+        - ~/.bash_history:/root/.bash_history
+    links:
+        - db
+    labels:
+        - "traefik.enable=false"
+web:
+    image: nginx
+    links:
+        - app
+    volumes_from:
+        - app
+    volumes:
+        - ./web/nginx.prod.conf:/etc/nginx/nginx.conf
+        - ./web/nginx.htpasswd:/etc/nginx/conf.d/nginx.htpasswd
+    labels:
+        - "traefik.frontend.rule=Host:elixium.com"
+        - "traefik.port=80"
+
+phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+        - db
+    labels:
+        - "traefik.frontend.rule=Host:pma.elixium.com"

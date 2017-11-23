@@ -1,1 +1,3 @@
 # elixium
+
+docker-compose up
